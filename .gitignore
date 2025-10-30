@@ -419,3 +419,5 @@ FodyWeavers.xsd
 
 CoLeaf DATASET
 CoLeaf DATASET/*
+output/datasets/*
+output/datasets
