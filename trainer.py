@@ -1,8 +1,16 @@
+from dataclasses import dataclass
 from torch import nn, optim
 from torch.utils.data import DataLoader
 from torch import device
 from tqdm.notebook import tqdm
 import torch
+
+@dataclass
+class TrainingMetrics: 
+    train_loss: float
+    train_acc: float
+    val_loss: float
+    val_acc: float
 
 class CoLeafTrainer:
     def __init__(
@@ -14,6 +22,8 @@ class CoLeafTrainer:
         loss_function: nn.Module,
         device: device = torch.device("cpu"),
         epochs=50,
+        patience=5,
+        delta=0.0,
     ):
         self.model = model.to(device)
         self.train_loader = train_loader
@@ -22,13 +32,29 @@ class CoLeafTrainer:
         self.optimizer = optimizer
         self.device = device
         self.epochs = epochs
+        self.patience = patience
+        self.delta = delta
+        self.best_score = None
+        self.early_stop = False
+        self.counter = 0
+        self.best_model = None
 
         self.metrics = []
 
     def train(self):
         total_data = len(self.train_loader.dataset.dataset)  # type: ignore
+        total_val_data = len(self.val_loader.dataset.dataset)  # type: ignore
         batches = len(self.train_loader)
+        batches_val = len(self.val_loader)
 
+        # self.model.eval()
+        # with torch.no_grad():
+        #     for data in self.val_loader:
+        #         inputs, labels = data[0].to(self.device), data[1].to(self.device)
+
+        #         outputs = self.model(inputs)
+        #         loss = self.loss_function(outputs, labels)
+        
         for epoch in tqdm(range(self.epochs), desc="Epochs"):
             self.model.train()
             running_loss, running_acc = 0.0, 0.0
@@ -62,17 +88,34 @@ class CoLeafTrainer:
                     running_val_loss += loss.item()
                     running_val_acc += (outputs.argmax(dim=1) == labels).sum().item()
 
-            val_loss = running_val_loss / batches
-            val_acc = running_val_acc / total_data
+            val_loss = running_val_loss / batches_val
+            val_acc = running_val_acc / total_val_data
             
-            self.metrics.append(
-                {
-                    "train_loss": train_loss,
-                    "train_acc": train_acc,
-                    "val_loss": val_loss,
-                    "val_acc": val_acc,
-                }
-            )
+            self.metrics.append(TrainingMetrics(
+                train_loss=train_loss,
+                train_acc=train_acc,
+                val_loss=val_loss,
+                val_acc=val_acc
+            ))
+            
+            # Early Stopping
+            if self.best_score is None:
+                self.best_score = val_loss
+                self.best_model = self.model.state_dict()
+            elif val_loss > self.best_score - self.delta:
+                self.counter += 1
+                if self.counter >= self.patience:
+                    self.early_stop = True
+                    print("Early stopping")
+                    break
+            else:
+                self.best_score = val_loss
+                self.best_model = self.model.state_dict()
+                self.counter = 0
+                
+                
+        if self.best_model is not None:
+            self.model.load_state_dict(self.best_model)
             
     def save_model(self, path: str):
         torch.save(self.model.state_dict(), path)

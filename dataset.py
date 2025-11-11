@@ -29,4 +29,29 @@ class CoLeafDataset(Dataset):
     
     def __getitem__(self, idx):
         return self.images[idx], self.labels[idx]
+    
 
+# Create and save dataset
+if __name__ == "__main__":
+    import os
+    import torch
+    from torchvision import transforms
+    
+    DATASET_OUTPUT_DIR = './output/datasets/dataset.pt'
+    DATASET_PATH = './CoLeaf DATASET'
+    IMG_SIZE = 224
+    
+    
+    dataset = CoLeafDataset(
+        data_dir=os.path.join(DATASET_PATH),
+        transform=transforms.Compose([
+            transforms.Resize((IMG_SIZE, IMG_SIZE)),          
+            transforms.ToTensor(),           
+            transforms.Normalize(            
+                mean=[0.5, 0.5, 0.5], 
+                std=[0.5, 0.5, 0.5]
+            )
+        ])
+    )
+
+    torch.save(dataset, DATASET_OUTPUT_DIR)
