@@ -30,6 +30,29 @@ class CoLeafDataset(Dataset):
     def __getitem__(self, idx):
         return self.images[idx], self.labels[idx]
     
+    
+class CoLeafSubset(Dataset):
+    def __init__(self, coleaf_dataset, indices, transform=None):
+        self.dataset = coleaf_dataset
+        self.indices = indices
+        self.classes = self.dataset.classes
+        self.labels = [self.dataset.labels[i] for i in self.indices]
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.indices)
+
+    def __getitem__(self, idx):
+        if isinstance(idx, list):
+            return [self.dataset[self.indices[i]] for i in idx]
+        
+        actual_idx = self.indices[idx]
+        image, label = self.dataset[actual_idx]
+        if self.transform: 
+            image = self.transform(image)
+            
+        return image, label
+    
 
 # Create and save dataset
 if __name__ == "__main__":

@@ -421,3 +421,5 @@ CoLeaf DATASET
 CoLeaf DATASET/*
 output/datasets/*
 output/datasets
+CoLeaf_augmented/
+CoLeaf_augmented/*

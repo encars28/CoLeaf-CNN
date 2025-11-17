@@ -42,8 +42,8 @@ class CoLeafTrainer:
         self.metrics = []
 
     def train(self):
-        total_data = len(self.train_loader.dataset.dataset)  # type: ignore
-        total_val_data = len(self.val_loader.dataset.dataset)  # type: ignore
+        total_data = len(self.train_loader.dataset)  # type: ignore
+        total_val_data = len(self.val_loader.dataset)  # type: ignore
         batches = len(self.train_loader)
         batches_val = len(self.val_loader)
 
