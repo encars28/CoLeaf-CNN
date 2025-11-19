@@ -1,7 +1,7 @@
 import os
 from PIL import Image
 from torch.utils.data import Dataset
-from tqdm.notebook import tqdm
+from tqdm import tqdm
 
 class CoLeafDataset(Dataset):
     def __init__(self, data_dir, transform=None):
@@ -15,7 +15,7 @@ class CoLeafDataset(Dataset):
         
         for class_name in tqdm(self.classes, desc="Loading classes"):
             class_path = os.path.join(self.data_dir, class_name)
-            for filename in tqdm(os.listdir(class_path), desc=f"Loading images for class {class_name}", leave=False):
+            for filename in os.listdir(class_path):
                 image = Image.open(os.path.join(class_path, filename)).convert('RGB')
                 # Aplicar las transformaciones
                 if self.transform:
@@ -62,7 +62,7 @@ if __name__ == "__main__":
     
     DATASET_OUTPUT_DIR = './output/datasets/dataset.pt'
     DATASET_PATH = './CoLeaf DATASET'
-    IMG_SIZE = 224
+    IMG_SIZE = 512
     
     
     dataset = CoLeafDataset(
@@ -78,3 +78,4 @@ if __name__ == "__main__":
     )
 
     torch.save(dataset, DATASET_OUTPUT_DIR)
+    print(f"Dataset saved to {DATASET_OUTPUT_DIR}")
