@@ -424,3 +424,4 @@ output/datasets
 output/models
 CoLeaf_augmented/
 CoLeaf_augmented/*
+.github

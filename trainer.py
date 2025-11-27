@@ -3,6 +3,7 @@ from torch.utils.data import DataLoader
 from torch import device
 import torch
 
+
 class CoLeafTrainer:
     def __init__(
         self,
@@ -26,6 +27,7 @@ class CoLeafTrainer:
         self.patience = patience
         self.delta = delta
         self.best_score = None
+        self.last_epoch = 0
         self.early_stop = False
         self.counter = 0
         self.best_model = None
@@ -68,21 +70,39 @@ class CoLeafTrainer:
 
             val_loss = running_val_loss / len(self.val_loader)
             val_acc = running_val_acc / len(self.val_loader.dataset)  # type: ignore
-            
-            self.metrics.append(
+
+            self.metrics += [
                 {
                     "epoch": epoch,
-                    "train_loss": train_loss,
-                    "train_acc": train_acc,
-                    "val_loss": val_loss,
-                    "val_acc": val_acc,
-                }
-            )
-            
+                    "value": train_loss,
+                    "type": "Training",
+                    "metric": "Loss",
+                },
+                {
+                    "epoch": epoch,
+                    "value": val_loss,
+                    "type": "Validation",
+                    "metric": "Loss",
+                },
+                {
+                    "epoch": epoch,
+                    "value": train_acc,
+                    "type": "Training",
+                    "metric": "Accuracy",
+                },
+                {
+                    "epoch": epoch,
+                    "value": val_acc,
+                    "type": "Validation",
+                    "metric": "Accuracy",
+                },
+            ]
+
             # Early Stopping
             if self.best_score is None:
                 self.best_score = val_loss
                 self.best_model = self.model.state_dict()
+                self.last_epoch = epoch
             elif val_loss > self.best_score - self.delta:
                 self.counter += 1
                 if self.counter >= self.patience:
@@ -92,10 +112,13 @@ class CoLeafTrainer:
                 self.best_score = val_loss
                 self.best_model = self.model.state_dict()
                 self.counter = 0
-                
-                
+                self.last_epoch = epoch
+
         if self.best_model is not None:
             self.model.load_state_dict(self.best_model)
+            self.last_epoch = self.epochs
             
+        self.metrics = [m for m in self.metrics if m["epoch"] <= self.last_epoch]
+
     def save_model(self, path: str):
         torch.save(self.model.state_dict(), path)

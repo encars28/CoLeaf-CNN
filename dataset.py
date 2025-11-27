@@ -16,7 +16,7 @@ class CoLeafDataset(Dataset):
         for class_name in tqdm(self.classes, desc="Loading classes"):
             class_path = os.path.join(self.data_dir, class_name)
             for filename in os.listdir(class_path):
-                image = Image.open(os.path.join(class_path, filename)).convert('RGB')
+                image = Image.open(os.path.join(class_path, filename))
                 # Aplicar las transformaciones
                 if self.transform:
                     image = self.transform(image)
